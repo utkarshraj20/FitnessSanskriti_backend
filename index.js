@@ -25,18 +25,24 @@ require('./db')
 app.use(bodyParser.json());
 const allowedOrigins = ['http://localhost:3000']; // Add more origins as needed
 
+// app.use(
+//     cors({
+//         origin: function (origin, callback) {
+//             if (!origin || allowedOrigins.includes(origin)) {
+//                 callback(null, true);
+//             } else {
+//                 callback(new Error('Not allowed by CORS'));
+//             }
+//         },
+//         credentials: true, // Allow credentials
+//     })
+// );
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true, // Allow credentials
+        origin: true,
+        credentials: true
     })
-);
+)
 app.use(cookieParser());
 
 
