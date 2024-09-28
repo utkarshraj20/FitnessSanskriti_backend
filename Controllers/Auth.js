@@ -79,6 +79,13 @@ async function LoginHandler(req, res, next) {
     }
 }
 
+async function LogoutHandler(req, res) {
+    res.cookie('authToken', '', { httpOnly: true, expires: new Date(0) });
+    res.cookie('refreshToken', '', { httpOnly: true, expires: new Date(0) });
+    
+    return res.json({ ok: true, message: 'Logged out successfully' });
+}
+
 async function CheckLoginHandler(req, res, next) {
     res.json({
         ok: true,
@@ -111,4 +118,4 @@ async function SendOtpHandler(req, res) {
     }
 }
 
-module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, SendOtpHandler}
+module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, SendOtpHandler, LogoutHandler}

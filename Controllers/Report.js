@@ -127,39 +127,39 @@ async function GetReportHandler(req, res){
 
     let tempResponse = [
         {
-            name : "Calorie Intake",
-            value : calorieIntake,
-            goal : maxCalorieIntake,
+            name : "CalorieIntake",
+            value : parseInt(calorieIntake),
+            goal : parseInt(maxCalorieIntake),
             unit : "cal",
         },
         {
             name : "Sleep",
-            value : sleep,
-            goal : goalSleep,
+            value : parseInt(sleep),
+            goal : parseInt(goalSleep),
             unit : "hrs",
         },
         {
             name: "Steps",
-            value : steps,
-            goal : goalSteps,
+            value : parseInt(steps),
+            goal : parseInt(goalSteps),
             unit : "steps",
         },
         {
             name : "Water",
-            value : water,
-            goal : goalWater,
+            value : parseInt(water),
+            goal : parseInt(goalWater),
             unit : "ml",
         },
         {
             name : "Workout",
-            value : workout,
-            goal : goalWorkout,
+            value : parseInt(workout),
+            goal : parseInt(goalWorkout),
             unit : "days",
         },
         {
             name : "Weight",
-            value : weight,
-            goal : goalWeight,
+            value : parseInt(weight),
+            goal : parseInt(goalWeight),
             unit : "kg",
         }
     ]

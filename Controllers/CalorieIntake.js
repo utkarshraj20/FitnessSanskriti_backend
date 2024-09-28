@@ -4,70 +4,91 @@ const request = require('request'); // for using nutrition api
 const User = require('../Models/UserSchema');
 require('dotenv').config();
 
-async function  AddCalorieIntakeHandler(req, res) {
+async function AddCalorieIntakeHandler(req, res) {
     const { item, date, quantity, quantitytype } = req.body;
+    console.log({ item, date, quantity, quantitytype });
+
     if (!item || !date || !quantity || !quantitytype) {
         return res.status(400).json(createResponse(false, 'Please provide all the details'));
     }
+
     let qtyingrams = 0;
     if (quantitytype === 'g') {
         qtyingrams = quantity;
-    }
-    else if (quantitytype === 'kg') {
+    } else if (quantitytype === 'kg') {
         qtyingrams = quantity * 1000;
-    }
-    else if (quantitytype === 'ml') {
+    } else if (quantitytype === 'ml') {
         qtyingrams = quantity;
-    }
-    else if (quantitytype === 'l') {
+    } else if (quantitytype === 'l') {
         qtyingrams = quantity * 1000;
-    }
-    else {
+    } else {
         return res.status(400).json(createResponse(false, 'Invalid quantity type'));
     }
 
-    var query = item;
-    request.get({
-        url: 'https://api.api-ninjas.com/v1/nutrition?query=' + query,
-        headers: {
-            'X-Api-Key': process.env.NUTRITION_API_KEY,
-        },
-    },async function (error, response, body) {
-        if (error) return console.error('Request failed:', error);
-        else if (response.statusCode != 200) return console.error('Error:', response.statusCode, body.toString('utf8'));
-        else {
-            // body: [{
-            //     "name": "rice",
-            //     "calories": 127.4,
-            //     "serving_size_g": 100,
-            //     "fat_total_g": 0.3,
-            //     "fat_saturated_g": 0.1,
-            //     "protein_g": 2.7,
-            //     "sodium_mg": 1,
-            //     "potassium_mg": 42,
-            //     "cholesterol_mg": 0,
-            //     "carbohydrates_total_g": 28.4,
-            //     "fiber_g": 0.4,
-            //     "sugar_g": 0.1
-            //   }]
+    /* Api expire, new api i have to add for getting calories */
 
-            body = JSON.parse(body) ;
-            let calorieIntake = (body[0].calories/body[0].serving_size_g)*parseInt(qtyingrams) ;
-            const userId = req.userId;
-            const user = await User.findOne({ _id: userId });
-            user.calorieIntake.push({
-                item,
-                date: new Date(date),
-                quantity,
-                quantitytype,
-                calorieIntake: parseInt(calorieIntake)
-            })
+    // const query = item;
+    // request.get({
+    //     url: 'https://api.api-ninjas.com/v1/nutrition?query=' + query,
+    //     headers: {
+    //         'X-Api-Key': process.env.NUTRITION_API_KEY,
+    //     },
+    // }, async function (error, response, body) {
+    //     if (error) return console.error('Request failed:', error);
+    //     else if (response.statusCode != 200) return console.error('Error:', response.statusCode, body.toString('utf8'));
 
-            await user.save();
-            res.json(createResponse(true, 'Calorie intake added successfully'));
+    //     body = JSON.parse(body);
+
+    //     // Check if the API returned valid data
+    //     if (!body || body.length === 0 || !body[0].calories || !body[0].serving_size_g) {
+    //         return res.status(400).json(createResponse(false, 'Invalid item data from the nutrition API'));
+    //     }
+    //     console.log(body[0].calories);
+    //     console.log(body[0].serving_size_g);
+    //     const caloriesPerGram = body[0].calories / body[0].serving_size_g;
+    //     console.log(caloriesPerGram);
+    //     if (isNaN(caloriesPerGram)) {
+    //         return res.status(400).json(createResponse(false, 'Error calculating calories'));
+    //     }
+
+
+    let caloriesPerGram = 0;
+    for (let i = 0; i < item.length; i++) {
+
+        if (item[i] >= 'a' && item[i] <= 'z') {
+            caloriesPerGram += (item[i].charCodeAt(0) - 'a'.charCodeAt(0));
         }
+        else if (item[i] >= 'A' && item[i] <= 'Z') {
+            caloriesPerGram += (item[i].charCodeAt(0) - 'A'.charCodeAt(0));
+        }
+    }
+
+    console.log(caloriesPerGram);
+
+    let calorieIntake = (caloriesPerGram * qtyingrams) / 25;
+
+    console.log(calorieIntake);
+
+    const userId = req.userId;
+    const user = await User.findOne({ _id: userId });
+
+    if (!user) {
+        return res.status(404).json(createResponse(false, 'User not found'));
+    }
+
+    user.calorieIntake.push({
+        item,
+        date: new Date(date),
+        quantity,
+        quantitytype,
+        calorieIntake: parseInt(calorieIntake)
     });
+
+    await user.save();
+    res.json(createResponse(true, 'Calorie intake added successfully'));
+    // });
 }
+
 
 async function GetCalorieIntakeByDateHandler(req, res) {
     const { date } = req.body;
@@ -87,6 +108,7 @@ async function GetCalorieIntakeByLimitHandler(req, res) {
     const { limit } = req.body;
     const userId = req.userId;
     const user = await User.findById({ _id: userId });
+    console.log(limit);
     if (!limit) {
         return res.status(400).json(createResponse(false, 'Please provide limit'));
     } else if (limit === 'all') {
@@ -102,7 +124,33 @@ async function GetCalorieIntakeByLimitHandler(req, res) {
         user.calorieIntake = user.calorieIntake.filter((item) => {
             return new Date(item.date).getTime() >= currentDate;
         })
-        return res.json(createResponse(true, `Calorie intake for the last ${limit} days`, user.calorieIntake));
+        console.log(user.calorieIntake);
+        const calorieIntakeByDate = {};
+
+        // Iterate over the data and group by normalized date (YYYY-MM-DD)
+        user.calorieIntake.forEach((item) => {
+            // Normalize the date to YYYY-MM-DDT00:00:00.000Z
+            const dateKey = new Date(item.date).toISOString().split('T')[0] + 'T00:00:00.000Z';
+
+            // If this date already exists, sum up the calorie intake
+            if (calorieIntakeByDate[dateKey]) {
+                calorieIntakeByDate[dateKey] += item.calorieIntake;  // Sum the calorie intake
+            } else {
+                // Initialize with the first occurrence's calorie intake
+                calorieIntakeByDate[dateKey] = item.calorieIntake;
+            }
+        });
+        console.log(calorieIntakeByDate);
+        // Convert the grouped data back into an array with only the date and calorieIntake fields
+        let calorieData = Object.keys(calorieIntakeByDate).map((dateString) => {
+            return {
+                date: new Date(dateString),  // Ensure the format is correct
+                value: calorieIntakeByDate[dateString]
+            };
+        });
+
+        console.log(user.calorieIntake);
+        return res.json(createResponse(true, `Calorie intake for the last ${limit} days`, calorieData));
     }
 }
 

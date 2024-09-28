@@ -7,7 +7,8 @@ const {
     RegisterHandler,
     LoginHandler,
     CheckLoginHandler,
-    SendOtpHandler
+    SendOtpHandler,
+    LogoutHandler
 } = require('../Controllers/Auth')
 
 
@@ -20,6 +21,8 @@ router.get('/test', async (req, res) => {
 router.post( '/register' , RegisterHandler);
 
 router.post('/login' , LoginHandler);
+
+router.post('/logout' , LogoutHandler);
 
 router.post('/sendotp' , SendOtpHandler)
 

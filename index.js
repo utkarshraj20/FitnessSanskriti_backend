@@ -47,7 +47,7 @@ app.use(cookieParser());
 
 
 app.use('/auth', authRoutes);
-app.use('/calorieintake', calorieIntakeRoutes);
+app.use('/calorieintaketrack', calorieIntakeRoutes);
 app.use('/admin', adminRoutes);
 app.use('/image-upload', imageUploadRoutes);
 app.use('/sleeptrack', sleepTrackRoutes);
