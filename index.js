@@ -39,7 +39,7 @@ const allowedOrigins = ['http://localhost:3000']; // Add more origins as needed
 // );
 app.use(
     cors({
-        origin: true,
+        origin: 'https://fitnesssanskriti.netlify.app',
         credentials: true
     })
 )
