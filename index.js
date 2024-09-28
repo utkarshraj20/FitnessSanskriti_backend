@@ -51,7 +51,7 @@ app.use('/calorieintaketrack', calorieIntakeRoutes);
 app.use('/admin', adminRoutes);
 app.use('/image-upload', imageUploadRoutes);
 app.use('/sleeptrack', sleepTrackRoutes);
-app.use('/steptrack', stepTrackRoutes);
+app.use('/stepstrack', stepTrackRoutes);
 app.use('/weighttrack', weightTrackRoutes);
 app.use('/watertrack', waterTrackRoutes);
 app.use('/workouttrack', workoutTrackRoutes);

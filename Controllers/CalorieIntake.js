@@ -2,6 +2,7 @@ const createResponse = require('../Utils/Response');
 const jwt = require('jsonwebtoken');
 const request = require('request'); // for using nutrition api
 const User = require('../Models/UserSchema');
+const getDayWiseResult = require('../Utils/GetDayWiseResult');
 require('dotenv').config();
 
 async function AddCalorieIntakeHandler(req, res) {
@@ -127,30 +128,21 @@ async function GetCalorieIntakeByLimitHandler(req, res) {
         console.log(user.calorieIntake);
         const calorieIntakeByDate = {};
 
-        // Iterate over the data and group by normalized date (YYYY-MM-DD)
         user.calorieIntake.forEach((item) => {
-            // Normalize the date to YYYY-MM-DDT00:00:00.000Z
             const dateKey = new Date(item.date).toISOString().split('T')[0] + 'T00:00:00.000Z';
 
-            // If this date already exists, sum up the calorie intake
             if (calorieIntakeByDate[dateKey]) {
                 calorieIntakeByDate[dateKey] += item.calorieIntake;  // Sum the calorie intake
             } else {
-                // Initialize with the first occurrence's calorie intake
                 calorieIntakeByDate[dateKey] = item.calorieIntake;
             }
         });
         console.log(calorieIntakeByDate);
-        // Convert the grouped data back into an array with only the date and calorieIntake fields
-        let calorieData = Object.keys(calorieIntakeByDate).map((dateString) => {
-            return {
-                date: new Date(dateString),  // Ensure the format is correct
-                value: calorieIntakeByDate[dateString]
-            };
-        });
+        
+        const dataByDate = getDayWiseResult(calorieIntakeByDate)
 
         console.log(user.calorieIntake);
-        return res.json(createResponse(true, `Calorie intake for the last ${limit} days`, calorieData));
+        return res.json(createResponse(true, `Calorie intake for the last ${limit} days`, dataByDate));
     }
 }
 

@@ -41,7 +41,15 @@ async function GetReportHandler(req, res){
     });
 
     // get today's weight
-    let weight = user.weight[user.weight.length - 1].weight;
+    let weight = 50 ;
+    let maxDate = 0 ;
+    user.weight.forEach((item)=>{
+        if( maxDate < item.date ){
+            maxDate = item.date ;
+            weight = item.weight ;
+        }
+    })
+
     // get today's height
     let height = user.height[user.height.length - 1].height;
 
@@ -163,6 +171,8 @@ async function GetReportHandler(req, res){
             unit : "kg",
         }
     ]
+
+    console.log(tempResponse);
 
     res.status(200).json(createResponse(true, 'Report', tempResponse));
 }

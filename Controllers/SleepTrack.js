@@ -74,7 +74,6 @@ async function GetSleepByLimitHandler(req, res) {
                 value: sleepTakenByDate[dateString]
             }
         })
-        console.log(sleepData)
         return res.json(createResponse(true, `Sleep entries for the last ${limit} days`, sleepData));
     }
 }
