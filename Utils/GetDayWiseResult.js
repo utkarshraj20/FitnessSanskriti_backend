@@ -5,6 +5,7 @@ function getDayWiseResult( data ){
             value: data[dateString]
         }
     })
+    dayWiseData.sort((a, b) => a.date - b.date);
     return dayWiseData ;
 }
 
