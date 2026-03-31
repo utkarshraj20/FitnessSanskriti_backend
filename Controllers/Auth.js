@@ -93,6 +93,59 @@ async function CheckLoginHandler(req, res, next) {
     })
 }
 
+async function GetProfileHandler(req, res, next) {
+    try {
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json(createResponse(false, 'User not found'));
+        }
+
+        const latestWeight = user.weight[user.weight.length - 1] || null;
+        const latestHeight = user.height[user.height.length - 1] || null;
+        const latestSleep = user.sleep[user.sleep.length - 1] || null;
+        const latestSteps = user.steps[user.steps.length - 1] || null;
+        const latestWater = user.water[user.water.length - 1] || null;
+        const latestWorkout = user.workouts[user.workouts.length - 1] || null;
+
+        const profile = {
+            name: user.name,
+            email: user.email,
+            gender: user.gender,
+            dob: user.dob,
+            goal: user.goal,
+            activityLevel: user.activityLevel,
+            joinedAt: user.createdAt,
+            totals: {
+                calorieEntries: user.calorieIntake.length,
+                sleepEntries: user.sleep.length,
+                stepEntries: user.steps.length,
+                waterEntries: user.water.length,
+                workoutEntries: user.workouts.length,
+                weightEntries: user.weight.length,
+            },
+            latestStats: {
+                weightInKg: latestWeight ? latestWeight.weight : null,
+                heightInCm: latestHeight ? latestHeight.height : null,
+                sleepInHrs: latestSleep ? latestSleep.durationInHrs : null,
+                steps: latestSteps ? latestSteps.steps : null,
+                waterInMl: latestWater ? latestWater.amountInMilliliters : null,
+                workout: latestWorkout
+                    ? {
+                        exercise: latestWorkout.exercise,
+                        durationInMinutes: latestWorkout.durationInMinutes,
+                        date: latestWorkout.date,
+                    }
+                    : null,
+            },
+        };
+
+        return res.json(createResponse(true, 'Profile fetched successfully', profile));
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function SendOtpHandler(req, res) {
     try{
         const {email} = req.body ;
@@ -118,4 +171,4 @@ async function SendOtpHandler(req, res) {
     }
 }
 
-module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, SendOtpHandler, LogoutHandler}
+module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, GetProfileHandler, SendOtpHandler, LogoutHandler}

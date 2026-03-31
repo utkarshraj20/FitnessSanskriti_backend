@@ -3,6 +3,7 @@ const app = express();
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const PORT = 8000;
 const cookieParser = require('cookie-parser');
 
@@ -20,7 +21,7 @@ const reportRoutes = require('./Routes/Report');
 
 
 require('dotenv').config();
-require('./db')
+const connectDB = require('./db');
 
 app.use(bodyParser.json());
 const allowedOrigins = ['http://localhost:3000']; // Add more origins as needed
@@ -45,6 +46,17 @@ app.use(
 )
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+    // If DB is down, fail fast instead of letting Mongoose operations buffer and timeout.
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            ok: false,
+            message: 'Database connection unavailable. Please try again.',
+        });
+    }
+    return next();
+});
+
 
 app.use('/auth', authRoutes);
 app.use('/calorieintaketrack', calorieIntakeRoutes);
@@ -64,6 +76,16 @@ app.get('/', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+async function startServer() {
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Failed to connect database. Server not started.', err.message);
+        process.exit(1);
+    }
+}
+
+startServer();
