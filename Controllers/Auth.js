@@ -146,6 +146,57 @@ async function GetProfileHandler(req, res, next) {
     }
 }
 
+async function UpdateProfileHandler(req, res, next) {
+    try {
+        const { name, gender, dob, goal, activityLevel, weightInKg, heightInCm } = req.body;
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json(createResponse(false, 'User not found'));
+        }
+
+        if (!name || !gender || !dob || !goal || !activityLevel) {
+            return res.status(400).json(createResponse(false, 'Please provide all required profile details'));
+        }
+
+        user.name = name;
+        user.gender = gender;
+        user.dob = dob;
+        user.goal = goal;
+        user.activityLevel = activityLevel;
+
+        if (weightInKg !== undefined && weightInKg !== null && weightInKg !== "") {
+            const parsedWeight = Number(weightInKg);
+            const latestWeight = user.weight[user.weight.length - 1];
+
+            if (!Number.isNaN(parsedWeight) && (!latestWeight || Number(latestWeight.weight) !== parsedWeight)) {
+                user.weight.push({
+                    weight: parsedWeight,
+                    date: new Date(),
+                });
+            }
+        }
+
+        if (heightInCm !== undefined && heightInCm !== null && heightInCm !== "") {
+            const parsedHeight = Number(heightInCm);
+            const latestHeight = user.height[user.height.length - 1];
+
+            if (!Number.isNaN(parsedHeight) && (!latestHeight || Number(latestHeight.height) !== parsedHeight)) {
+                user.height.push({
+                    height: parsedHeight,
+                    date: new Date(),
+                });
+            }
+        }
+
+        await user.save();
+
+        return res.json(createResponse(true, 'Profile updated successfully'));
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function SendOtpHandler(req, res) {
     try{
         const {email} = req.body ;
@@ -171,4 +222,4 @@ async function SendOtpHandler(req, res) {
     }
 }
 
-module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, GetProfileHandler, SendOtpHandler, LogoutHandler}
+module.exports = {RegisterHandler, LoginHandler, CheckLoginHandler, GetProfileHandler, UpdateProfileHandler, SendOtpHandler, LogoutHandler}
