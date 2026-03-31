@@ -18,6 +18,7 @@ const waterTrackRoutes = require('./Routes/WaterTrack');
 const workoutTrackRoutes = require('./Routes/WorkoutTrack');
 const workoutRoutes = require('./Routes/WorkoutPlans');
 const reportRoutes = require('./Routes/Report');
+const chatRoutes = require('./Routes/Chat');
 const { startDailyReminderScheduler } = require('./Services/dailyReminderScheduler');
 
 
@@ -70,6 +71,7 @@ app.use('/watertrack', waterTrackRoutes);
 app.use('/workouttrack', workoutTrackRoutes);
 app.use('/workoutplans', workoutRoutes);
 app.use('/report', reportRoutes);
+app.use('/chat', chatRoutes);
 
 
 app.get('/', (req, res) => {
