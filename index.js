@@ -29,6 +29,7 @@ app.use(bodyParser.json());
 const allowedOrigins = [
     'http://localhost:3000',
     'https://fitnesssanskriti.netlify.app',
+    'https://fitness-sanskriti-frontend.vercel.app',
 ]; // Add more origins as needed
 
 app.use(
