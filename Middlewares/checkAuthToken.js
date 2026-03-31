@@ -1,8 +1,14 @@
 const jwt = require('jsonwebtoken');
 
 function checkAuth(req, res, next) {
-    const authToken = req.cookies.authToken;
-    const refreshToken = req.cookies.refreshToken;
+    const cookieAuthToken = req.cookies.authToken;
+    const cookieRefreshToken = req.cookies.refreshToken;
+    const headerAuthToken = req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.slice(7)
+        : '';
+    const headerRefreshToken = req.headers['x-refresh-token'];
+    const authToken = headerAuthToken || cookieAuthToken;
+    const refreshToken = headerRefreshToken || cookieRefreshToken;
 
     // console.log("Check Auth Token MIDDLEWARE CALLED", authToken)
 
@@ -23,8 +29,10 @@ function checkAuth(req, res, next) {
                     const newRefreshToken = jwt.sign({ userId: refreshDecoded.userId }, process.env.JWT_REFRESH_SECRET_KEY, { expiresIn: '10d' });
 
                     // Set the new tokens as cookies in the response
-                    res.cookie('authToken', newAuthToken, { httpOnly: true });
-                    res.cookie('refreshToken', newRefreshToken, { httpOnly: true });
+                    res.cookie('authToken', newAuthToken, { httpOnly: true, secure: true, sameSite: 'None' });
+                    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'None' });
+                    res.setHeader('x-auth-token', newAuthToken);
+                    res.setHeader('x-refresh-token', newRefreshToken);
 
                     // Continue processing the request with the new auth token
                     req.userId = refreshDecoded.userId;

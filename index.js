@@ -42,6 +42,7 @@ app.use(
             }
         },
         credentials: true,
+        exposedHeaders: ['x-auth-token', 'x-refresh-token'],
     })
 )
 app.use(cookieParser());
