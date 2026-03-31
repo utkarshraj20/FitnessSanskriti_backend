@@ -18,6 +18,7 @@ const waterTrackRoutes = require('./Routes/WaterTrack');
 const workoutTrackRoutes = require('./Routes/WorkoutTrack');
 const workoutRoutes = require('./Routes/WorkoutPlans');
 const reportRoutes = require('./Routes/Report');
+const { startDailyReminderScheduler } = require('./Services/dailyReminderScheduler');
 
 
 require('dotenv').config();
@@ -79,6 +80,7 @@ app.get('/', (req, res) => {
 async function startServer() {
     try {
         await connectDB();
+        startDailyReminderScheduler();
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
