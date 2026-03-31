@@ -8,6 +8,7 @@ const {
     LoginHandler,
     CheckLoginHandler,
     GetProfileHandler,
+    UpdateProfileHandler,
     SendOtpHandler,
     LogoutHandler
 } = require('../Controllers/Auth')
@@ -30,6 +31,8 @@ router.post('/sendotp' , SendOtpHandler)
 router.post('/checklogin', authTokenHandler, CheckLoginHandler)
 
 router.get('/me', authTokenHandler, GetProfileHandler)
+
+router.put('/me', authTokenHandler, UpdateProfileHandler)
 
 router.use(errorHandler)
 
