@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../Models/UserSchema');
+const EmailOtp = require('../Models/EmailOtpSchema');
 
 // rnrb cfyp wvyp nquk
 const transporter = nodemailer.createTransport({
@@ -15,15 +16,35 @@ const transporter = nodemailer.createTransport({
 
 async function RegisterHandler( req , res , next ){
     try{
-        const { name, email, password, weightInKg, heightInCm, gender, dob, goal, activityLevel } = req.body;
-        const existingUser = await User.findOne({ email: email });
+        const { name, email, password, weightInKg, heightInCm, gender, dob, goal, activityLevel, otp } = req.body;
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if( existingUser ){
             return res.status(409).json(createResponse(false, 'Email already exists'));
         }
+        if (!otp) {
+            return res.status(400).json(createResponse(false, 'Please provide the email verification OTP'));
+        }
+
+        const otpRecord = await EmailOtp.findOne({ email: normalizedEmail });
+        if (!otpRecord) {
+            return res.status(400).json(createResponse(false, 'Please request an OTP first'));
+        }
+
+        if (otpRecord.expiresAt.getTime() < Date.now()) {
+            await EmailOtp.deleteOne({ _id: otpRecord._id });
+            return res.status(400).json(createResponse(false, 'OTP expired. Please request a new one'));
+        }
+
+        const isOtpValid = await bcrypt.compare(String(otp), otpRecord.otpHash);
+        if (!isOtpValid) {
+            return res.status(400).json(createResponse(false, 'Invalid OTP'));
+        }
+
         const newUser = new User({
             name,
             password,
-            email,
+            email: normalizedEmail,
             weight: [
                 {
                     weight: weightInKg,
@@ -44,6 +65,7 @@ async function RegisterHandler( req , res , next ){
             activityLevel
         });
         await newUser.save(); // Await the save operation
+        await EmailOtp.deleteOne({ _id: otpRecord._id });
 
         res.status(201).json(createResponse(true, 'User registered successfully'));
     }
@@ -199,21 +221,38 @@ async function UpdateProfileHandler(req, res, next) {
 
 async function SendOtpHandler(req, res) {
     try{
-        const {email} = req.body ;
+        const normalizedEmail = String(req.body?.email || '').trim().toLowerCase();
+        if (!normalizedEmail) {
+            return res.status(400).json(createResponse(false, 'Please provide an email'));
+        }
+
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+            return res.status(409).json(createResponse(false, 'Email already exists'));
+        }
+
         const otp = Math.floor( 100000 + Math.random()*900000 ) ;
+        const otpHash = await bcrypt.hash(String(otp), 8);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         const mailOptions = {
-            from: 'utkarshmahiyan@gmail.com',
-            to: email,
+            from: process.env.COMPANY_EMAIL || 'utkarshmahiyan@gmail.com',
+            to: normalizedEmail,
             subject: 'OTP for verification',
-            text: `Your OTP is ${otp}`
+            text: `Your OTP is ${otp}. It is valid for 5 minutes.`
         }
-        transporter.sendMail(mailOptions, async (err, info) => {
+        transporter.sendMail(mailOptions, async (err) => {
             if (err) {
                 console.log(err);
                 res.status(500).json(createResponse(false, err.message));
             } else {
-                res.json(createResponse(true, 'OTP sent successfully', { otp }));
+                await EmailOtp.findOneAndUpdate(
+                    { email: normalizedEmail },
+                    { email: normalizedEmail, otpHash, expiresAt },
+                    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+                );
+
+                res.json(createResponse(true, 'OTP sent successfully. It is valid for 5 minutes.'));
             }
         });
     }
